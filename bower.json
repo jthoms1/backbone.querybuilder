@@ -1,0 +1,13 @@
+{
+  "name": "backbone.querybuilder",
+  "version": "0.0.1",
+  "main": "dist/backbone.querybuilder.js",
+  "dependencies": {
+    "jquery": ">=1.6",
+    "underscore": ">=1.5",
+    "backbone": "~1.0"
+  },
+  "devDependencies": {
+    "qunit": "~1.12.0"
+  }
+}
