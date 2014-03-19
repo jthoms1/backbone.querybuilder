@@ -1,3 +1,4 @@
+/* global module */
 (function(root, factory) {
     "use strict";
 
@@ -6,7 +7,7 @@
         define(['backbone', 'underscore'], function(Backbone, _) {
             // Export global even in AMD case in case this script is loaded with
             // others that may still expect a global Backbone.
-            factory(Backbone, _);
+            return factory(Backbone, _);
         });
 
     // Next for Node.js or CommonJS.
@@ -14,42 +15,162 @@
         var underscore = require('underscore'),
             Backbone = require('backbone');
 
-        factory(Backbone, underscore);
+        module.exports = factory(Backbone, underscore);
 
     // Finally, as a browser global.
     } else {
-        factory(root.Backbone, root._);
+        root.querybuilder = factory(root.Backbone, root._);
     }
 
-}(this, function(Backbone, _) {
+}(this, function (Backbone, _) {
     "use strict";
 
     // Create query data
     // fetch clears query data or not
+    var addToQueueData = function (name, data) {
+        this._rbQueryData = this._rbQueryData || {};
+        this._rbQueryData[name] = this._rbQueryData[name] || [];
 
+        this._rbQueryData[name].push(data);
+    };
 
-    var RESTBuilderMixin = {
-        // Default build process for including sub models and collections
-        include: function (_includesList) {
-            var includeList = [];
-            _.each(_includesList, function (includedItem, modelName) {
-                var includeString = modelName;
-                if (includedItem.subIncludes.length > 0) {
-                    includeString += '/' + (includedItem.subIncludes[0].prototype.getModelName());
-                }
-                includeList.push(includeString);
-            });
-            return includeList.join();
+    var getAllQueryData = function () {
+        var queryData = {};
+
+        _.each(this._rbQueryData, function (fieldArray, name) {
+            _.extend(queryData, QueryBuilder.provider[name](fieldArray));
+        });
+
+        return queryData;
+    };
+
+    var QueryBuilder = {
+        provider: null,
+        setProvider: function (provider) {
+            this.provider = provider;
+        }
+    };
+
+    var QueryBuilderMixin = {
+        /**
+         * Includes additional related objects with the returned data
+         *
+         * @example
+         *  this.model.include('role', 'organization')
+         *  this.model.include('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method include
+         * @return {object} Reference to current object
+         */
+        include: function () {
+            //arguements
+            return this;
         },
 
-        
+        /**
+         * Includes additional related objects with the returned data
+         *
+         * @example
+         *  this.model.where({
+         *      role: {
+         *          '=': 'editor'
+         *      }
+         *  })
+         *  this.model.include('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method where
+         * @param {object} options used to build the queries
+         * @return {object} Reference to current object
+         */
+        where: function (options) {
+            
+            return this;
+        },
 
+        /**
+         * Includes additional related objects with the returned data
+         *
+         * @example
+         *  this.model.include('role', 'organization')
+         *  this.model.include('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method limit
+         * @return {object} Reference to current object
+         */
+        limit: function (limitNum) {
+            
+            return this;
+        },
+
+        /**
+         * Includes additional related objects with the returned data
+         *
+         * @example
+         *  this.model.include('role', 'organization')
+         *  this.model.include('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method skip
+         * @return {object} Reference to current object
+         */
+        skip: function (skipNum) {
+            addToQueueData.call(this, 'skip', skipNum);
+            return this;
+        },
+
+        /**
+         * Includes additional related objects with the returned data
+         * can be called multiple times for each additonal sort item.
+         *
+         * @example
+         *  this.model.include('role', 'organization')
+         *  this.model.include('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method sortBy
+         * @return {object} Reference to current object
+         */
+        sortBy: function (options, order) {
+            var fieldName,
+                direction;
+
+            if (typeof options === 'string') {
+                fieldName = options;
+                direction = order || 'asc';
+            } else {
+                for (var key in options) {
+                    if (options.hasOwnProperty(key)) {
+                        fieldName = key;
+                        direction = options[key];
+                        break;
+                    }
+                }
+            }
+
+            addToQueueData.call(this, 'sortBy', {
+                field: fieldName,
+                direction: direction
+            });
+
+            return this;
+        },
+
+        /**
+         * Overrides backbone sync to include data built by methods
+         */
         sync: function (method, item, options) {
-            options.data = _.extend(this._rbQueryData || {}, options.data || {});
+            var queryFields = getAllQueryData.call(this, this._rbQueryData);
+
+            options.data = _.extend(queryFields, options.data || {});
             return Backbone.sync.call(this, method, item, options);
         }
     };
 
-    _.extend(Backbone.Model.prototype, RESTBuilderMixin);
-    _.extend(Backbone.Collection.prototype, RESTBuilderMixin);
+    _.extend(Backbone.Model.prototype, QueryBuilderMixin);
+    _.extend(Backbone.Collection.prototype, QueryBuilderMixin);
+
+    return QueryBuilder;
 }));

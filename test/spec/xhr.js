@@ -1,4 +1,4 @@
-/* global test, module, sinon  */
+/* global test, module, sinon, equal  */
 (function (Backbone, _) {
     "use strict";
 
@@ -8,6 +8,8 @@
         User,
         UserCollection;
 
+    window.querybuilder.setProvider(window.earthlingDataProvider);
+
     module( "REST XHR url tests", {
         setup: function() {
             User = Backbone.Model.extend({
@@ -15,7 +17,8 @@
             });
 
             UserCollection = Backbone.Collection.extend({
-                model: User
+                model: User,
+                url: '/api/user'
             });
 
             server = sinon.fakeServer.create();
@@ -32,62 +35,94 @@
     });
 
     test("include: single option", 4, function() {
-        this.setServerData("/api/user/1?" + encodeURIComponent("with=role"));
+        var requestUrl = "/api/user/1?" + encodeURIComponent("with=role");
+
+        this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
             .include('role')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("include: multiple options", 8, function () {
-        this.setServerData("/api/user/1?" + encodeURIComponent("with=role,organization"));
+    test("include: multiple options", 1, function () {
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("role,organization");
+
+        this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
             .include('role', 'organization')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("include: 2 level deep relationship", 8, function () {
-        this.setServerData("/api/user/1?" + encodeURIComponent("with=organization.owner"));
+    test("include: 2 level deep relationship", 1, function () {
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner");
+
+        this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
             .include('organization.owner')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("include: 3 level deep relationship", 8, function () {
-        this.setServerData("/api/user/1?" + encodeURIComponent("with=organization.role.stuff"));
+    test("include: 3 level deep relationship", 1, function () {
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.role.stuff");
+
+        this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
             .include('organization.owner.role')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("include: multiple option deep relationship", 8, function () {
-        this.setServerData("/api/user/1?" + encodeURIComponent("with=organization.owner,organization.staff"));
+    test("include: multiple option deep relationship", 1, function () {
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner,organization.staff");
+
+        this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
             .include('organization.owner', 'organization.staff')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: single field equal", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("role=editor"));
+    test("where: single field equal", 1, function () {
+        var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -96,26 +131,38 @@
                     '=': 'editor'
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: single field equal shorthand", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("role=editor"));
+    test("where: single field equal shorthand", 1, function () {
+        var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .where({
                 role: 'editor'
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: multiple fields", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("role=editor&createdBy=4"));
+    test("where: multiple fields", 1, function () {
+        var requestUrl = "/api/user?role=" + encodeURIComponent("editor&createdBy=4");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -123,13 +170,19 @@
                 role: 'editor',
                 createdBy: 4
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: like field", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("firstName=like:Joh*"));
+    test("where: like field", 1, function () {
+        var requestUrl = "/api/user?firstName=" + encodeURIComponent("like:Joh*");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -138,13 +191,19 @@
                     'like': 'Joh*'
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: in list", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("role=in:editor,author"));
+    test("where: in list", 1, function () {
+        var requestUrl = "/api/user?role=" + encodeURIComponent("in:editor,author");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -153,26 +212,38 @@
                     'in': ['editor', 'author']
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: in list shorthand", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("role=in:editor,author"));
+    test("where: in list shorthand", 1, function () {
+        var requestUrl = "/api/user?role=" + encodeURIComponent("in:editor,author");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .where({
                 role: ['editor', 'author']
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: greater than", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("createdAt=gt:10"));
+    test("where: greater than", 1, function () {
+        var requestUrl = "/api/user?createdAt=" + encodeURIComponent("gt:10");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -181,13 +252,19 @@
                     '>': 10
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: greater than", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("createdAt=lt:10"));
+    test("where: greater than", 1, function () {
+        var requestUrl = "/api/user?createdAt=" + encodeURIComponent("lt:10");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -196,13 +273,19 @@
                     '<': 10
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: deep relationship field", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("organization.type=facility"));
+    test("where: deep relationship field", 1, function () {
+        var requestUrl = "/api/user?organization.type=" + encodeURIComponent("eq:facility");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
@@ -211,95 +294,148 @@
                     '=': 'facility'
                 }
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("where: deep relationship field shorthand", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("organization.type=facility"));
+    test("where: deep relationship field shorthand", 1, function () {
+        var requestUrl = "/api/user?organization.type=" + encodeURIComponent("eq:facility");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .where({
                 'organization.type': 'facility'
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("limit", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("limit=10"));
+    // Dan has completed interface on first30
+    test("limit", 1, function () {
+        var requestUrl = "/api/user?limit=" + encodeURIComponent("10");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .limit(10)
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("skip by integer", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("limit=20,10"));
+    // Dan has completed interface on first30
+    test("skip by integer", 1, function () {
+        var requestUrl = "/api/user?limit=" + encodeURIComponent("20,10");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .limit(10)
             .skip(2)
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("sortBy: single field shorthand", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("sortBy=lastName"));
+    // Dan has completed interface on first30
+    test("sortBy: single field shorthand", 1, function () {
+        var requestUrl = "/api/user?orderBy=" + encodeURIComponent("lastName");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .sortBy('lastName')
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("sortBy: single field ascending", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("sortBy=lastName"));
+    // Dan has completed interface on first30
+    test("sortBy: single field ascending", 1, function () {
+        var requestUrl = "/api/user?orderBy=" + encodeURIComponent("lastName");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .sortBy({
                 lastName: 'asc'
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
-    test("sortBy: single field descending", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("sortyBy=-lastName"));
+    // Dan has completed interface on first30
+    test("sortBy: single field descending", 1, function () {
+        var requestUrl = "/api/user?orderBy=" + encodeURIComponent("-lastName");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .sortBy({
                 lastName: 'desc'
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
 
     //TODO: Figure out order of importance for sort fields
-    test("sortBy: multiple fields", 8, function () {
-        this.setServerData("/api/user?" + encodeURIComponent("sortBy=-lastName,firstName"));
+    test("sortBy: multiple fields", 1, function () {
+        var requestUrl = "/api/user?orderBy=" + encodeURIComponent("-lastName,firstName");
+
+        this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
             .sortBy({
-                lastName: 'desc',
+                lastName: 'desc'
+            })
+            .sortBy({
                 firstName: 'asc'
             })
-            .fetch();
+            .fetch({
+                complete: function () {
+                    equal(requestUrl, this.url);
+                }
+            });
 
         server.respond();
     });
