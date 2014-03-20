@@ -34,8 +34,8 @@
         }
     });
 
-    test("include: single option", 4, function() {
-        var requestUrl = "/api/user/1?" + encodeURIComponent("with=role");
+    test("include: single option", 1, function() {
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("role");
 
         this.setServerData(requestUrl);
 
@@ -86,7 +86,7 @@
     });
 
     test("include: 3 level deep relationship", 1, function () {
-        var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.role.stuff");
+        var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner.role");
 
         this.setServerData(requestUrl);
 
@@ -160,7 +160,7 @@
     });
 
     test("where: multiple fields", 1, function () {
-        var requestUrl = "/api/user?role=" + encodeURIComponent("editor&createdBy=4");
+        var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor") + "&createdBy=" + encodeURIComponent("eq:4");
 
         this.setServerData(requestUrl);
 

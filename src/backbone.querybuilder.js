@@ -25,25 +25,6 @@
 }(this, function (Backbone, _) {
     "use strict";
 
-    // Create query data
-    // fetch clears query data or not
-    var addToQueueData = function (name, data) {
-        this._rbQueryData = this._rbQueryData || {};
-        this._rbQueryData[name] = this._rbQueryData[name] || [];
-
-        this._rbQueryData[name].push(data);
-    };
-
-    var getAllQueryData = function () {
-        var queryData = {};
-
-        _.each(this._rbQueryData, function (fieldArray, name) {
-            _.extend(queryData, QueryBuilder.provider[name](fieldArray));
-        });
-
-        return queryData;
-    };
-
     var QueryBuilder = {
         provider: null,
         setProvider: function (provider) {
@@ -64,7 +45,10 @@
          * @return {object} Reference to current object
          */
         include: function () {
-            //arguements
+            //arguments
+            this._rbQueryData = this._rbQueryData || {};
+            this._rbQueryData['include'] = [].slice.call(arguments);
+
             return this;
         },
 
@@ -85,7 +69,28 @@
          * @return {object} Reference to current object
          */
         where: function (options) {
-            
+            var whereData = {};
+
+            for (var key in options) {
+                if (options.hasOwnProperty(key)) {
+
+                    if (typeof options[key] === 'string' || typeof options[key] === "number") {
+                        whereData[key] = {
+                            '=' : options[key]
+                        };
+                    } else if (toString.call(options[key]) === '[object Array]') {
+                        whereData[key] = {
+                            'in' : options[key]
+                        };
+                    } else {
+                        whereData[key] = options[key];
+                    }
+                }
+            }
+
+            this._rbQueryData = this._rbQueryData || {};
+            this._rbQueryData['where'] = whereData;
+
             return this;
         },
 
@@ -101,7 +106,9 @@
          * @return {object} Reference to current object
          */
         limit: function (limitNum) {
-            
+            this._rbQueryData = this._rbQueryData || {};
+            this._rbQueryData['limit'] = limitNum;
+
             return this;
         },
 
@@ -117,7 +124,9 @@
          * @return {object} Reference to current object
          */
         skip: function (skipNum) {
-            addToQueueData.call(this, 'skip', skipNum);
+            this._rbQueryData = this._rbQueryData || {};
+            this._rbQueryData['skip'] = skipNum;
+
             return this;
         },
 
@@ -145,12 +154,17 @@
                     if (options.hasOwnProperty(key)) {
                         fieldName = key;
                         direction = options[key];
+
+                        // Prevents more than one sortBy being set per
+                        // method call. Otherwise we don't really know the order
                         break;
                     }
                 }
             }
 
-            addToQueueData.call(this, 'sortBy', {
+            this._rbQueryData = this._rbQueryData || {};
+            this._rbQueryData['sortBy'] = this._rbQueryData['sortBy'] || [];
+            this._rbQueryData['sortBy'].push({
                 field: fieldName,
                 direction: direction
             });
@@ -162,7 +176,7 @@
          * Overrides backbone sync to include data built by methods
          */
         sync: function (method, item, options) {
-            var queryFields = getAllQueryData.call(this, this._rbQueryData);
+            var queryFields = QueryBuilder.provider.getFields(this._rbQueryData);
 
             options.data = _.extend(queryFields, options.data || {});
             return Backbone.sync.call(this, method, item, options);
