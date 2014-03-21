@@ -1,4 +1,4 @@
-/* global module */
+/* global module, toString */
 (function(root, factory) {
     "use strict";
 
@@ -45,9 +45,17 @@
          * @return {object} Reference to current object
          */
         include: function () {
-            //arguments
+            var options = [].slice.call(arguments),
+                includeData = [];
+
+            _.each(options, function (includeItem) {
+                includeData.push({
+                    field: includeItem
+                });
+            });
+
             this._rbQueryData = this._rbQueryData || {};
-            this._rbQueryData['include'] = [].slice.call(arguments);
+            this._rbQueryData['include'] = includeData;
 
             return this;
         },
@@ -69,24 +77,29 @@
          * @return {object} Reference to current object
          */
         where: function (options) {
-            var whereData = {};
+            var whereData = [];
 
-            for (var key in options) {
-                if (options.hasOwnProperty(key)) {
-
-                    if (typeof options[key] === 'string' || typeof options[key] === "number") {
-                        whereData[key] = {
-                            '=' : options[key]
-                        };
-                    } else if (toString.call(options[key]) === '[object Array]') {
-                        whereData[key] = {
-                            'in' : options[key]
-                        };
-                    } else {
-                        whereData[key] = options[key];
-                    }
+            _.each(options, function (value, key) {
+                if (typeof value === 'string' || typeof value === "number") {
+                    whereData.push({
+                        field: key,
+                        operator: '=',
+                        value: value
+                    });
+                } else if (toString.call(value) === '[object Array]') {
+                    whereData.push({
+                        field: key,
+                        operator: 'in',
+                        value: value
+                    });
+                } else if (typeof value === 'object') {
+                    whereData.push({
+                        field: key,
+                        operator: _.keys(value)[0],
+                        value: _.values(value)[0]
+                    });
                 }
-            }
+            });
 
             this._rbQueryData = this._rbQueryData || {};
             this._rbQueryData['where'] = whereData;
@@ -149,17 +162,9 @@
             if (typeof options === 'string') {
                 fieldName = options;
                 direction = order || 'asc';
-            } else {
-                for (var key in options) {
-                    if (options.hasOwnProperty(key)) {
-                        fieldName = key;
-                        direction = options[key];
-
-                        // Prevents more than one sortBy being set per
-                        // method call. Otherwise we don't really know the order
-                        break;
-                    }
-                }
+            } else if (typeof options === 'object') {
+                fieldName = _.keys(options)[0];
+                direction = _.values(options)[0];
             }
 
             this._rbQueryData = this._rbQueryData || {};
@@ -177,6 +182,10 @@
          */
         sync: function (method, item, options) {
             var queryFields = QueryBuilder.provider.getFields(this._rbQueryData);
+
+            // After gathering data reset the query info because it should only be
+            // used on one request.
+            this._rbQueryData = {};
 
             options.data = _.extend(queryFields, options.data || {});
             return Backbone.sync.call(this, method, item, options);

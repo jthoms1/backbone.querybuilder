@@ -26,42 +26,33 @@
 
     var conversionMethods = {
         include: function (queryData) {
-            var includeFields = queryData['include'];
-            console.log({
-                'with': includeFields.join()
+            var includeFields = _.map(queryData['include'], function (obj) {
+                return _.values(obj)[0];
             });
+
             return {
                 'with': includeFields.join()
             };
         },
 
         where: function (queryData) {
-            var whereFields = queryData['where'],
-                whereData = {};
-            
-            for (var key in whereFields) {
-                if (whereFields.hasOwnProperty(key)) {
+            var whereData = {},
+                comparisons = {
+                    '=': 'eq',
+                    '>': 'gt',
+                    '<': 'lt',
+                    'in': 'in',
+                    'like': 'like'
+                };
 
-                    for (var comparison in whereFields[key]) {
-                        if (whereFields[key].hasOwnProperty(comparison)) {
+            _.each(queryData['where'], function (item) {
 
-                            if (comparison === '=') {
-                                whereData[key] = 'eq:' + whereFields[key][comparison];
-                            } else if (comparison === '>') {
-                                whereData[key] = 'gt:' + whereFields[key][comparison];
-                            } else if (comparison === '<') {
-                                whereData[key] = 'lt:' + whereFields[key][comparison];
-                            } else if (comparison === 'in') {
-                                whereData[key] = 'in:' + whereFields[key][comparison].join();
-                            } else if (comparison === 'like') {
-                                whereData[key] = 'like:' + whereFields[key][comparison];
-                            } else {
-                                whereData[key] = whereFields[key][comparison];
-                            }
-                        }
-                    }
+                if (comparisons[item.operator]) {
+                    whereData[item.field] = comparisons[item.operator] + ':' + item.value;
+                } else {
+                    whereData[item.field] = item.value;
                 }
-            }
+            });
 
             return whereData;
         },
@@ -80,17 +71,13 @@
         },
 
         sortBy: function (queryData) {
-            var sortFields = queryData['sortBy'],
-                i = 0,
-                items = [];
-
-            for (; i < sortFields.length; i++) {
-                var direction = (sortFields[i].direction === 'asc') ? '' : '-';
-                items.push(direction + sortFields[i].field);
-            }
+            var sortByData = _.map(queryData['sortBy'], function (item) {
+                var direction = (item.direction === 'asc') ? '' : '-';
+                return direction + item.field;
+            });
 
             return {
-                orderBy: items.join()
+                orderBy: sortByData.join()
             };
         }
     };
@@ -99,12 +86,12 @@
         getFields: function (queryData) {
             var data = {};
 
-            for (var name in queryData) {
-                if (queryData.hasOwnProperty(name) && conversionMethods[name]) {
-                    var tempData = conversionMethods[name](queryData);
+            _.each(queryData, function (value, key) {
+                if (conversionMethods[key]) {
+                    var tempData = conversionMethods[key](queryData);
                     _.extend(data, tempData || {});
                 }
-            }
+            });
 
             return data;
         }

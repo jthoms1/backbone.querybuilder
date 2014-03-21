@@ -8,8 +8,6 @@
         User,
         UserCollection;
 
-    window.querybuilder.setProvider(window.earthlingDataProvider);
-
     module( "REST XHR url tests", {
         setup: function() {
             User = Backbone.Model.extend({
@@ -28,6 +26,8 @@
                     "Content-Type": "application/json"
                 }, JSON.stringify({})]);
             };
+
+            window.querybuilder.setProvider(window.earthlingDataProvider);
         },
         teardown: function () {
             server.restore();
