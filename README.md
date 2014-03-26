@@ -21,18 +21,21 @@ user.limit(10).fetch();
 ```
 
 ```JavaScript
+// Fetch User model and include related role and organization
 var user = new User({'id': 1});
-user.include('role', 'organization').fetch();
+user.includeRelated('role', 'organization').fetch();
 ```
 
 ```JavaScript
-var user = new User({'id': 1});
-user.where({
+// Fetch User models when user's role is editor or author
+var users = new UserCollection();
+users.when({
     role: ['editor', 'author']
 }).fetch();
 ```
 
 ```JavaScript
+// Fetch 10 User models that are on the 
 var users = new UserCollection();
 users.limit(10).skip(2).fetch();
 ```

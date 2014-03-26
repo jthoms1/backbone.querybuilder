@@ -27,8 +27,18 @@
 
     var QueryBuilder = {
         provider: null,
+
+        /*
+         * When provider is set then update Backbone Model and Collection prototypes
+         * to have new querybuilder methods.
+         */
         setProvider: function (provider) {
             this.provider = provider;
+            _.extend(Backbone.Model.prototype, QueryBuilderMixin);
+            _.extend(Backbone.Collection.prototype, QueryBuilderMixin);
+        },
+        getMixin: function () {
+            return QueryBuilderMixin;
         }
     };
 
@@ -37,25 +47,25 @@
          * Includes additional related objects with the returned data
          *
          * @example
-         *  this.model.include('role', 'organization')
-         *  this.model.include('organization.owner')
+         *  this.model.includeRelated('role', 'organization')
+         *  this.model.includeRelated('organization.owner')
          *  this.model.incldue('organization.owner.role', 'organization.staff')
          *
-         * @method include
+         * @method includeRelated
          * @return {object} Reference to current object
          */
-        include: function () {
+        includeRelated: function () {
             var options = [].slice.call(arguments),
-                includeData = [];
+                includeRelatedData = [];
 
-            _.each(options, function (includeItem) {
-                includeData.push({
-                    field: includeItem
+            _.each(options, function (includeRelatedItem) {
+                includeRelatedData.push({
+                    field: includeRelatedItem
                 });
             });
 
             this._rbQueryData = this._rbQueryData || {};
-            this._rbQueryData['include'] = includeData;
+            this._rbQueryData['includeRelated'] = includeRelatedData;
 
             return this;
         },
@@ -64,36 +74,36 @@
          * Includes additional related objects with the returned data
          *
          * @example
-         *  this.model.where({
+         *  this.model.when({
          *      role: {
          *          '=': 'editor'
          *      }
          *  })
-         *  this.model.include('organization.owner')
+         *  this.model.includeRelated('organization.owner')
          *  this.model.incldue('organization.owner.role', 'organization.staff')
          *
-         * @method where
+         * @method when
          * @param {object} options used to build the queries
          * @return {object} Reference to current object
          */
-        where: function (options) {
-            var whereData = [];
+        when: function (options) {
+            var whenData = [];
 
             _.each(options, function (value, key) {
                 if (typeof value === 'string' || typeof value === "number") {
-                    whereData.push({
+                    whenData.push({
                         field: key,
                         operator: '=',
                         value: value
                     });
                 } else if (toString.call(value) === '[object Array]') {
-                    whereData.push({
+                    whenData.push({
                         field: key,
                         operator: 'in',
                         value: value
                     });
                 } else if (typeof value === 'object') {
-                    whereData.push({
+                    whenData.push({
                         field: key,
                         operator: _.keys(value)[0],
                         value: _.values(value)[0]
@@ -102,7 +112,7 @@
             });
 
             this._rbQueryData = this._rbQueryData || {};
-            this._rbQueryData['where'] = whereData;
+            this._rbQueryData['when'] = whenData;
 
             return this;
         },
@@ -111,8 +121,8 @@
          * Includes additional related objects with the returned data
          *
          * @example
-         *  this.model.include('role', 'organization')
-         *  this.model.include('organization.owner')
+         *  this.model.includeRelatedRelated('role', 'organization')
+         *  this.model.includeRelated('organization.owner')
          *  this.model.incldue('organization.owner.role', 'organization.staff')
          *
          * @method limit
@@ -129,8 +139,8 @@
          * Includes additional related objects with the returned data
          *
          * @example
-         *  this.model.include('role', 'organization')
-         *  this.model.include('organization.owner')
+         *  this.model.includeRelated('role', 'organization')
+         *  this.model.includeRelated('organization.owner')
          *  this.model.incldue('organization.owner.role', 'organization.staff')
          *
          * @method skip
@@ -148,14 +158,14 @@
          * can be called multiple times for each additonal sort item.
          *
          * @example
-         *  this.model.include('role', 'organization')
-         *  this.model.include('organization.owner')
+         *  this.model.includeRelated('role', 'organization')
+         *  this.model.includeRelated('organization.owner')
          *  this.model.incldue('organization.owner.role', 'organization.staff')
          *
-         * @method sortBy
+         * @method orderBy
          * @return {object} Reference to current object
          */
-        sortBy: function (options, order) {
+        orderBy: function (options, order) {
             var fieldName,
                 direction;
 
@@ -168,8 +178,8 @@
             }
 
             this._rbQueryData = this._rbQueryData || {};
-            this._rbQueryData['sortBy'] = this._rbQueryData['sortBy'] || [];
-            this._rbQueryData['sortBy'].push({
+            this._rbQueryData['orderBy'] = this._rbQueryData['orderBy'] || [];
+            this._rbQueryData['orderBy'].push({
                 field: fieldName,
                 direction: direction
             });
@@ -178,7 +188,7 @@
         },
 
         /**
-         * Overrides backbone sync to include data built by methods
+         * Overrides backbone sync to includeRelated data built by methods
          */
         sync: function (method, item, options) {
             var queryFields = QueryBuilder.provider.getFields(this._rbQueryData);
@@ -191,9 +201,6 @@
             return Backbone.sync.call(this, method, item, options);
         }
     };
-
-    _.extend(Backbone.Model.prototype, QueryBuilderMixin);
-    _.extend(Backbone.Collection.prototype, QueryBuilderMixin);
 
     return QueryBuilder;
 }));

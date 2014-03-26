@@ -1,5 +1,5 @@
 /* global test, module, deepEqual  */
-(function (Backbone, _) {
+(function (Backbone, _, querybuilder, earthlingDataProvider) {
     "use strict";
 
     var user,
@@ -18,17 +18,18 @@
                 url: '/api/user'
             });
 
+            querybuilder.setProvider(window.earthlingDataProvider);
         }
     });
 
-    test("include: single option", 1, function() {
+    test("includeRelated: single option", 1, function() {
 
         user = new User({'id': 1});
         user
-            .include('role');
+            .includeRelated('role');
 
         deepEqual(user._rbQueryData, {
-            include: [
+            includeRelated: [
                 {
                     field: 'role'
                 }
@@ -36,13 +37,13 @@
         });
     });
 
-    test("include: multiple options", 1, function () {
+    test("includeRelated: multiple options", 1, function () {
         user = new User({'id': 1});
         user
-            .include('role', 'organization');
+            .includeRelated('role', 'organization');
 
         deepEqual(user._rbQueryData, {
-            include: [
+            includeRelated: [
                 {
                     field: 'role'
                 },
@@ -53,13 +54,13 @@
         });
     });
 
-    test("include: 2 level deep relationship", 1, function () {
+    test("includeRelated: 2 level deep relationship", 1, function () {
         user = new User({'id': 1});
         user
-            .include('organization.owner');
+            .includeRelated('organization.owner');
 
         deepEqual(user._rbQueryData, {
-            include: [
+            includeRelated: [
                 {
                     field: 'organization.owner'
                 }
@@ -67,13 +68,13 @@
         });
     });
 
-    test("include: 3 level deep relationship", 1, function () {
+    test("includeRelated: 3 level deep relationship", 1, function () {
         user = new User({'id': 1});
         user
-            .include('organization.owner.role');
+            .includeRelated('organization.owner.role');
 
         deepEqual(user._rbQueryData, {
-            include: [
+            includeRelated: [
                 {
                     field: 'organization.owner.role'
                 }
@@ -81,13 +82,13 @@
         });
     });
 
-    test("include: multiple option deep relationship", 1, function () {
+    test("includeRelated: multiple option deep relationship", 1, function () {
         user = new User({'id': 1});
         user
-            .include('organization.owner', 'organization.staff');
+            .includeRelated('organization.owner', 'organization.staff');
 
         deepEqual(user._rbQueryData, {
-            include: [
+            includeRelated: [
                 {
                     field: 'organization.owner'
                 },
@@ -98,17 +99,17 @@
         });
     });
 
-    test("where: single field equal", 1, function () {
+    test("when: single field equal", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: {
                     '=': 'editor'
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'role',
                     operator: '=',
@@ -118,15 +119,15 @@
         });
     });
 
-    test("where: single field equal shorthand", 1, function () {
+    test("when: single field equal shorthand", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: 'editor'
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'role',
                     operator: '=',
@@ -136,16 +137,16 @@
         });
     });
 
-    test("where: multiple fields", 1, function () {
+    test("when: multiple fields", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: 'editor',
                 createdBy: 4
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'role',
                     operator: '=',
@@ -160,17 +161,17 @@
         });
     });
 
-    test("where: like field", 1, function () {
+    test("when: like field", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 firstName: {
                     'like': 'Joh*'
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'firstName',
                     operator: 'like',
@@ -180,17 +181,17 @@
         });
     });
 
-    test("where: in list", 1, function () {
+    test("when: in list", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: {
                     'in': ['editor', 'author']
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'role',
                     operator: 'in',
@@ -200,15 +201,15 @@
         });
     });
 
-    test("where: in list shorthand", 1, function () {
+    test("when: in list shorthand", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: ['editor', 'author']
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'role',
                     operator: 'in',
@@ -218,17 +219,17 @@
         });
     });
 
-    test("where: greater than", 1, function () {
+    test("when: greater than", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 createdAt: {
                     '>': 10
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'createdAt',
                     operator: '>',
@@ -238,17 +239,17 @@
         });
     });
 
-    test("where: greater than", 1, function () {
+    test("when: greater than", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 createdAt: {
                     '<': 10
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'createdAt',
                     operator: '<',
@@ -258,17 +259,17 @@
         });
     });
 
-    test("where: deep relationship field", 1, function () {
+    test("when: deep relationship field", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 'organization.type': {
                     '=': 'facility'
                 }
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'organization.type',
                     operator: '=',
@@ -278,15 +279,15 @@
         });
     });
 
-    test("where: deep relationship field shorthand", 1, function () {
+    test("when: deep relationship field shorthand", 1, function () {
         users = new UserCollection();
         users
-            .where({
+            .when({
                 'organization.type': 'facility'
             });
 
         deepEqual(users._rbQueryData, {
-            where: [
+            when: [
                 {
                     field: 'organization.type',
                     operator: '=',
@@ -321,13 +322,13 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field shorthand", 1, function () {
+    test("orderBy: single field shorthand", 1, function () {
         users = new UserCollection();
         users
-            .sortBy('lastName');
+            .orderBy('lastName');
 
         deepEqual(users._rbQueryData, {
-            sortBy: [
+            orderBy: [
                 {
                     field: 'lastName',
                     direction: 'asc'
@@ -337,15 +338,15 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field ascending", 1, function () {
+    test("orderBy: single field ascending", 1, function () {
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'asc'
             });
 
         deepEqual(users._rbQueryData, {
-            sortBy: [
+            orderBy: [
                 {
                     field: 'lastName',
                     direction: 'asc'
@@ -355,15 +356,15 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field descending", 1, function () {
+    test("orderBy: single field descending", 1, function () {
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'desc'
             });
 
         deepEqual(users._rbQueryData, {
-            sortBy: [
+            orderBy: [
                 {
                     field: 'lastName',
                     direction: 'desc'
@@ -373,18 +374,18 @@
     });
 
     //TODO: Figure out order of importance for sort fields
-    test("sortBy: multiple fields", 1, function () {
+    test("orderBy: multiple fields", 1, function () {
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'desc'
             })
-            .sortBy({
+            .orderBy({
                 firstName: 'asc'
             });
 
         deepEqual(users._rbQueryData, {
-            sortBy: [
+            orderBy: [
                 {
                     field: 'lastName',
                     direction: 'desc'
@@ -399,4 +400,4 @@
 
 
 
-})(window.Backbone, window._);
+})(window.Backbone, window._, window.querybuilder, window.earthlingDataProvider);

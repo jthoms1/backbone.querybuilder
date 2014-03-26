@@ -1,5 +1,5 @@
 /* global test, module, sinon, equal  */
-(function (Backbone, _) {
+(function (Backbone, _, querybuilder, earthlingDataProvider) {
     "use strict";
 
     var server,
@@ -34,14 +34,14 @@
         }
     });
 
-    test("include: single option", 1, function() {
+    test("includeRelated: single option", 1, function() {
         var requestUrl = "/api/user/1?with=" + encodeURIComponent("role");
 
         this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
-            .include('role')
+            .includeRelated('role')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -51,14 +51,14 @@
         server.respond();
     });
 
-    test("include: multiple options", 1, function () {
+    test("includeRelated: multiple options", 1, function () {
         var requestUrl = "/api/user/1?with=" + encodeURIComponent("role,organization");
 
         this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
-            .include('role', 'organization')
+            .includeRelated('role', 'organization')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -68,14 +68,14 @@
         server.respond();
     });
 
-    test("include: 2 level deep relationship", 1, function () {
+    test("includeRelated: 2 level deep relationship", 1, function () {
         var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner");
 
         this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
-            .include('organization.owner')
+            .includeRelated('organization.owner')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -85,14 +85,14 @@
         server.respond();
     });
 
-    test("include: 3 level deep relationship", 1, function () {
+    test("includeRelated: 3 level deep relationship", 1, function () {
         var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner.role");
 
         this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
-            .include('organization.owner.role')
+            .includeRelated('organization.owner.role')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -102,14 +102,14 @@
         server.respond();
     });
 
-    test("include: multiple option deep relationship", 1, function () {
+    test("includeRelated: multiple option deep relationship", 1, function () {
         var requestUrl = "/api/user/1?with=" + encodeURIComponent("organization.owner,organization.staff");
 
         this.setServerData(requestUrl);
 
         user = new User({'id': 1});
         user
-            .include('organization.owner', 'organization.staff')
+            .includeRelated('organization.owner', 'organization.staff')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -119,14 +119,14 @@
         server.respond();
     });
 
-    test("where: single field equal", 1, function () {
+    test("when: single field equal", 1, function () {
         var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: {
                     '=': 'editor'
                 }
@@ -140,14 +140,14 @@
         server.respond();
     });
 
-    test("where: single field equal shorthand", 1, function () {
+    test("when: single field equal shorthand", 1, function () {
         var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: 'editor'
             })
             .fetch({
@@ -159,14 +159,14 @@
         server.respond();
     });
 
-    test("where: multiple fields", 1, function () {
+    test("when: multiple fields", 1, function () {
         var requestUrl = "/api/user?role=" + encodeURIComponent("eq:editor") + "&createdBy=" + encodeURIComponent("eq:4");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: 'editor',
                 createdBy: 4
             })
@@ -179,14 +179,14 @@
         server.respond();
     });
 
-    test("where: like field", 1, function () {
+    test("when: like field", 1, function () {
         var requestUrl = "/api/user?firstName=" + encodeURIComponent("like:Joh*");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 firstName: {
                     'like': 'Joh*'
                 }
@@ -200,14 +200,14 @@
         server.respond();
     });
 
-    test("where: in list", 1, function () {
+    test("when: in list", 1, function () {
         var requestUrl = "/api/user?role=" + encodeURIComponent("in:editor,author");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: {
                     'in': ['editor', 'author']
                 }
@@ -221,14 +221,14 @@
         server.respond();
     });
 
-    test("where: in list shorthand", 1, function () {
+    test("when: in list shorthand", 1, function () {
         var requestUrl = "/api/user?role=" + encodeURIComponent("in:editor,author");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 role: ['editor', 'author']
             })
             .fetch({
@@ -240,14 +240,14 @@
         server.respond();
     });
 
-    test("where: greater than", 1, function () {
+    test("when: greater than", 1, function () {
         var requestUrl = "/api/user?createdAt=" + encodeURIComponent("gt:10");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 createdAt: {
                     '>': 10
                 }
@@ -261,14 +261,14 @@
         server.respond();
     });
 
-    test("where: greater than", 1, function () {
+    test("when: greater than", 1, function () {
         var requestUrl = "/api/user?createdAt=" + encodeURIComponent("lt:10");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 createdAt: {
                     '<': 10
                 }
@@ -282,14 +282,14 @@
         server.respond();
     });
 
-    test("where: deep relationship field", 1, function () {
+    test("when: deep relationship field", 1, function () {
         var requestUrl = "/api/user?organization.type=" + encodeURIComponent("eq:facility");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 'organization.type': {
                     '=': 'facility'
                 }
@@ -303,14 +303,14 @@
         server.respond();
     });
 
-    test("where: deep relationship field shorthand", 1, function () {
+    test("when: deep relationship field shorthand", 1, function () {
         var requestUrl = "/api/user?organization.type=" + encodeURIComponent("eq:facility");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .where({
+            .when({
                 'organization.type': 'facility'
             })
             .fetch({
@@ -360,14 +360,14 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field shorthand", 1, function () {
+    test("orderBy: single field shorthand", 1, function () {
         var requestUrl = "/api/user?orderBy=" + encodeURIComponent("lastName");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .sortBy('lastName')
+            .orderBy('lastName')
             .fetch({
                 complete: function () {
                     equal(requestUrl, this.url);
@@ -378,14 +378,14 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field ascending", 1, function () {
+    test("orderBy: single field ascending", 1, function () {
         var requestUrl = "/api/user?orderBy=" + encodeURIComponent("lastName");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'asc'
             })
             .fetch({
@@ -398,14 +398,14 @@
     });
 
     // Dan has completed interface on first30
-    test("sortBy: single field descending", 1, function () {
+    test("orderBy: single field descending", 1, function () {
         var requestUrl = "/api/user?orderBy=" + encodeURIComponent("-lastName");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'desc'
             })
             .fetch({
@@ -418,17 +418,17 @@
     });
 
     //TODO: Figure out order of importance for sort fields
-    test("sortBy: multiple fields", 1, function () {
+    test("orderBy: multiple fields", 1, function () {
         var requestUrl = "/api/user?orderBy=" + encodeURIComponent("-lastName,firstName");
 
         this.setServerData(requestUrl);
 
         users = new UserCollection();
         users
-            .sortBy({
+            .orderBy({
                 lastName: 'desc'
             })
-            .sortBy({
+            .orderBy({
                 firstName: 'asc'
             })
             .fetch({
@@ -440,6 +440,4 @@
         server.respond();
     });
 
-
-
-})(window.Backbone, window._);
+})(window.Backbone, window._, window.querybuilder, window.earthlingDataProvider);

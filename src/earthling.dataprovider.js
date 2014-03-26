@@ -25,18 +25,18 @@
     "use strict";
 
     var conversionMethods = {
-        include: function (queryData) {
-            var includeFields = _.map(queryData['include'], function (obj) {
+        includeRelated: function (queryData) {
+            var includeRelatedFields = _.map(queryData['includeRelated'], function (obj) {
                 return _.values(obj)[0];
             });
 
             return {
-                'with': includeFields.join()
+                'with': includeRelatedFields.join()
             };
         },
 
-        where: function (queryData) {
-            var whereData = {},
+        when: function (queryData) {
+            var whenData = {},
                 comparisons = {
                     '=': 'eq',
                     '>': 'gt',
@@ -45,16 +45,16 @@
                     'like': 'like'
                 };
 
-            _.each(queryData['where'], function (item) {
+            _.each(queryData['when'], function (item) {
 
                 if (comparisons[item.operator]) {
-                    whereData[item.field] = comparisons[item.operator] + ':' + item.value;
+                    whenData[item.field] = comparisons[item.operator] + ':' + item.value;
                 } else {
-                    whereData[item.field] = item.value;
+                    whenData[item.field] = item.value;
                 }
             });
 
-            return whereData;
+            return whenData;
         },
 
         limit: function (queryData) {
@@ -70,14 +70,14 @@
             };
         },
 
-        sortBy: function (queryData) {
-            var sortByData = _.map(queryData['sortBy'], function (item) {
+        orderBy: function (queryData) {
+            var orderByData = _.map(queryData['orderBy'], function (item) {
                 var direction = (item.direction === 'asc') ? '' : '-';
                 return direction + item.field;
             });
 
             return {
-                orderBy: sortByData.join()
+                orderBy: orderByData.join()
             };
         }
     };
