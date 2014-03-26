@@ -4,7 +4,7 @@
 
     // Set up Backbone appropriately for the environment. Start with AMD.
     if (typeof define === 'function' && define.amd) {
-        define(['backbone', 'underscore'], function(Backbone, _) {
+        define('backbone.querybuilder', ['backbone', 'underscore'], function(Backbone, _) {
             // Export global even in AMD case in case this script is loaded with
             // others that may still expect a global Backbone.
             return factory(Backbone, _);
