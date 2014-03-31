@@ -1,5 +1,5 @@
-/* global test, module, ok  */
-(function (Backbone, _, querybuilder) {
+/* global test, module, ok */
+(function (Backbone, _, querybuilder, earthlingDataProvider) {
     "use strict";
 
     var user,
@@ -9,7 +9,7 @@
         bbMixin = querybuilder.getMixin(),
         expectedCollisions = ['sync'];
 
-    module("Backbone Mixin", {
+    module("Backbone - Method Compatibility", {
         setup: function() {
             User = Backbone.Model.extend({
                 urlRoot: '/api/user'
@@ -23,18 +23,15 @@
     });
 
     test("Backbone Model: unexpected method collisions", _.keys(bbMixin).length - expectedCollisions.length, function () {
-        var prop;
         user = new User();
 
-        _.indexOf(expectedCollisions, prop);
-
-        for (prop in bbMixin) {
+        _.each(bbMixin, function (value, prop) {
             if (_.indexOf(expectedCollisions, prop) !== -1) {
-                continue;
+                return;
             }
 
             ok(typeof user[prop] === 'undefined', 'Backbone.Model already has method ' + prop);
-        }
+        });
     });
 
     test("Backbone Model: expected method collisions", expectedCollisions.length, function () {
@@ -47,16 +44,15 @@
     });
 
     test("Backbone Collection: unexpected method collisions", _.keys(bbMixin).length - expectedCollisions.length, function () {
-        var prop;
         users = new UserCollection();
 
-        for (prop in bbMixin) {
+        _.each(bbMixin, function (value, prop) {
             if (_.indexOf(expectedCollisions, prop) !== -1) {
-                continue;
+                return;
             }
 
             ok(typeof users[prop] === 'undefined', 'Backbone.Collection already has method ' + prop);
-        }
+        });
     });
 
     test("Backbone Collection: expected method collisions", expectedCollisions.length, function () {
@@ -68,4 +64,4 @@
         }
     });
 
-})(window.Backbone, window._, window.querybuilder);
+})(window.Backbone, window._, window.querybuilder, window.earthlingDataProvider);

@@ -25,24 +25,25 @@
 }(this, function (Backbone, _) {
     "use strict";
 
-    var QueryBuilder = {
-        provider: null,
-
-        /*
-         * When provider is set then update Backbone Model and Collection prototypes
-         * to have new querybuilder methods.
-         */
-        setProvider: function (provider) {
-            this.provider = provider;
-            _.extend(Backbone.Model.prototype, QueryBuilderMixin);
-            _.extend(Backbone.Collection.prototype, QueryBuilderMixin);
-        },
-        getMixin: function () {
-            return QueryBuilderMixin;
-        }
-    };
-
     var QueryBuilderMixin = {
+
+        /**
+         * Includes additional related objects with the returned data
+         *
+         * @example
+         *  this.model.includeRelated('role', 'organization')
+         *  this.model.includeRelated('organization.owner')
+         *  this.model.incldue('organization.owner.role', 'organization.staff')
+         *
+         * @method includeRelated
+         * @return {object} Reference to current object
+         */
+        setPersistentQuery: function (isPersistent) {
+            this._rbPersistentQuery = isPersistent;
+
+            return this;
+        },
+
         /**
          * Includes additional related objects with the returned data
          *
@@ -195,10 +196,43 @@
 
             // After gathering data reset the query info because it should only be
             // used on one request.
-            this._rbQueryData = {};
+            if (!this._rbPersistentQuery) {
+                this._rbQueryData = {};
+            }
 
-            options.data = _.extend(queryFields, options.data || {});
+            // Only apply Queries when a read is occuring.
+            if (method === 'read') {
+                options.data = _.extend(queryFields, options.data || {});
+            }
             return Backbone.sync.call(this, method, item, options);
+        }
+    };
+
+    // Save references to overwritten methods
+    var bbModelSync = Backbone.Model.prototype.sync,
+        bbCollectionSync = Backbone.Collection.prototype.sync;
+
+    var QueryBuilder = {
+        provider: null,
+
+        /*
+         * When provider is set then update Backbone Model and Collection prototypes
+         * to have new querybuilder methods.
+         */
+        setProvider: function (provider) {
+            this.provider = provider;
+            _.extend(Backbone.Model.prototype, QueryBuilderMixin);
+            _.extend(Backbone.Collection.prototype, QueryBuilderMixin);
+        },
+        removeProvider: function () {
+            this.provider = null;
+            Backbone.Model.prototype =  _.omit(Backbone.Model.prototype, _.keys(QueryBuilderMixin));
+            Backbone.Model.prototype.sync = bbModelSync;
+            Backbone.Collection.prototype =  _.omit(Backbone.Collection.prototype, _.keys(QueryBuilderMixin));
+            Backbone.Collection.prototype.sync = bbCollectionSync;
+        },
+        getMixin: function () {
+            return QueryBuilderMixin;
         }
     };
 

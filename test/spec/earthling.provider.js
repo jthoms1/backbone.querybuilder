@@ -1,4 +1,4 @@
-/* global test, module, sinon, equal  */
+/* global test, module, sinon, equal, deepEqual  */
 (function (Backbone, _, querybuilder, earthlingDataProvider) {
     "use strict";
 
