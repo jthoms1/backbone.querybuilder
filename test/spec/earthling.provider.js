@@ -261,7 +261,7 @@
         server.respond();
     });
 
-    test("when: greater than", 1, function () {
+    test("when: less than", 1, function () {
         var requestUrl = "/api/user?createdAt=" + encodeURIComponent("lt:10");
 
         this.setServerData(requestUrl);
