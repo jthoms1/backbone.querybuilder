@@ -7,7 +7,7 @@
         define('earthling.dataprovider', ['underscore'], function(_) {
             // Export global even in AMD case in case this script is loaded with
             // others that may still expect a global Backbone.
-            factory(_);
+            return factory(_);
         });
 
     // Next for Node.js or CommonJS.
